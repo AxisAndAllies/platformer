@@ -97,6 +97,8 @@ Clarity.prototype.keydown = function (e) {
     case 39:
         _this.key.right = true;
         break;
+    case 32:
+        _this.key.space = true;
     }
 };
 
@@ -105,15 +107,17 @@ Clarity.prototype.keyup = function (e) {
     var _this = this;
 
     switch (e.keyCode) {
-    case 37:
+      case 37:
         _this.key.left = false;
         break;
-    case 38:
+      case 38:
         _this.key.up = false;
         break;
-    case 39:
+      case 39:
         _this.key.right = false;
         break;
+      case 32:
+        _this.key.space = false;
     }
 };
 
@@ -165,6 +169,7 @@ Clarity.prototype.load_map = function (map) {
     this.key.left  = false;
     this.key.up    = false;
     this.key.right = false;
+    this.key.space = false;
     
     this.camera = {
         x: 0,
@@ -436,6 +441,9 @@ Clarity.prototype.update_player = function () {
         if (this.player.vel.x < this.current_map.vel_limit.x)
             this.player.vel.x += this.current_map.movement_speed.left;
     }
+    if (this.key.space) {
+      socket.emit('pause')
+    }
 
     this.move_player();
     // update server
@@ -514,6 +522,8 @@ canvas.width = 900;
 canvas.height = 900;
 
 window.other_players = []
+window.pauseTime = 5000 // initial game...
+window.elapsedTime = 0
 
 var game = new Clarity();
     game.set_viewport(canvas.width, canvas.height);
@@ -546,9 +556,20 @@ var game = new Clarity();
         // console.log(other_players)
     })
 
-var Loop = function() {
+    socket.on("pause", msg => {
+      let {time} = msg
+      // console.log(other_players)
+      window.pauseTime = time
+    });
 
-  game.update();
+var Loop = function() {
+  if(window.pauseTime <= 0) {
+    game.update();
+  }
+  else {
+      document.getElementById("timer").innerHTML = `Game unpausing in ${window.pauseTime/1000}`;
+  }
+  window.pauseTime -= 1000/60
 //   console.log('sent player pos update', game.player)
   
 };

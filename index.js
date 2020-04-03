@@ -7,13 +7,20 @@ const path = require("path");
 app.use(express.static("public"));
 
 app.get("/", function(req, res) {
-  console.log('sending...')
   res.sendFile("/index.html");
-  console.log('sent')
 });
 
-players = []
+app.get("/debug", function(req, res) {
+  res.sendFile(path.join(__dirname, "/public/debugger.html"))
+});
 
+
+players = []
+pauseTime = 0
+
+/*
+see https://socket.io/docs/emit-cheatsheet/
+*/
 
 io.on("connection", function(socket) {
   console.log("a user connected", socket.id);
@@ -27,6 +34,16 @@ io.on("connection", function(socket) {
     // console.log(players);
 
     socket.broadcast.emit("other_player_pos", {id: socket.id, pos: msg});
+  });
+  socket.on("pause", function(msg) {
+    // when any player sends a pause event, pause for all players
+    pauseTime = 5000
+
+    socket.emit("pause", {time: pauseTime});
+    socket.broadcast.emit("pause", { time: pauseTime });
+    // setInterval(function() {
+    //   pauseTime = 0;
+    // }, pauseTime);
   });
 });
 
